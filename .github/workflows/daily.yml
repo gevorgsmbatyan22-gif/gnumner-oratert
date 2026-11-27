@@ -1,0 +1,64 @@
+name: Daily procurement digest
+
+on:
+  schedule:
+    - cron: "41 19 * * *"   # 23:41 Yerevan (UTC+4)
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Date YYYY-MM-DD (empty = today, Yerevan time)"
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: digest
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install tools
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q libarchive-tools catdoc
+          pip install requests beautifulsoup4 xlrd
+
+      - name: Pick date
+        run: |
+          D="${{ github.event.inputs.date }}"
+          if [ -z "$D" ]; then D=$(TZ=Asia/Yerevan date +%F); fi
+          echo "DAY=$D" >> "$GITHUB_ENV"
+
+      - name: Fetch notices
+        run: |
+          python3 scripts/fetch_tenders.py "$DAY" out_g gnanshum 2> log_g.txt &
+          python3 scripts/fetch_tenders.py "$DAY" out_b bac      2> log_b.txt &
+          python3 scripts/fetch_tenders.py "$DAY" out_a achurd   2> log_a.txt &
+          wait
+          tail -n 3 log_g.txt log_b.txt log_a.txt
+
+      - name: Classify
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_MODEL: ${{ vars.CLAUDE_MODEL }}
+        run: python3 scripts/classify.py "$DAY" out_g/tenders.json out_b/tenders.json out_a/tenders.json
+
+      - name: Build page
+        run: python3 scripts/build.py
+
+      - name: Commit
+        run: |
+          git config user.name "digest-bot"
+          git config user.email "digest-bot@users.noreply.github.com"
+          git add data/days.json site/index.html
+          git diff --cached --quiet && echo "no changes" || (git commit -m "Digest $DAY" && git push)
