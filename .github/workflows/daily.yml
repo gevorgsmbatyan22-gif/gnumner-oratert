@@ -35,9 +35,11 @@ jobs:
 
       - name: Install tools
         run: |
-          sudo apt-get update -q
-          sudo apt-get install -y -q libarchive-tools catdoc
-          pip install requests beautifulsoup4 xlrd
+          for i in 1 2 3; do
+            sudo apt-get update -q && sudo apt-get install -y -q libarchive-tools catdoc && break
+            echo "apt attempt $i failed, retrying"; sleep 20
+          done
+          for i in 1 2 3; do pip install requests beautifulsoup4 xlrd && break; sleep 15; done
 
       - name: Pick date
         run: |
