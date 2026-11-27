@@ -2,7 +2,8 @@ name: Daily procurement digest
 
 on:
   schedule:
-    - cron: "41 19 * * *"   # 23:41 Yerevan (UTC+4)
+    - cron: "41 19 * * *"   # 23:41 Yerevan - today's notices
+    - cron: "41 3 * * *"    # 07:41 Yerevan - re-check yesterday (fills gaps)
   workflow_dispatch:
     inputs:
       date:
@@ -11,6 +12,8 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: digest
@@ -20,6 +23,9 @@ jobs:
   update:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -36,10 +42,18 @@ jobs:
       - name: Pick date
         run: |
           D="${{ github.event.inputs.date }}"
-          if [ -z "$D" ]; then D=$(TZ=Asia/Yerevan date +%F); fi
+          if [ -z "$D" ]; then
+            if [ "${{ github.event.schedule }}" = "41 3 * * *" ]; then
+              D=$(TZ=Asia/Yerevan date -d yesterday +%F); echo "BACKFILL=1" >> "$GITHUB_ENV"
+            else
+              D=$(TZ=Asia/Yerevan date +%F)
+            fi
+          fi
           echo "DAY=$D" >> "$GITHUB_ENV"
+          echo "Processing $D"
 
       - name: Fetch notices
+        continue-on-error: true
         run: |
           python3 scripts/fetch_tenders.py "$DAY" out_g gnanshum 2> log_g.txt &
           python3 scripts/fetch_tenders.py "$DAY" out_b bac      2> log_b.txt &
@@ -54,11 +68,20 @@ jobs:
         run: python3 scripts/classify.py "$DAY" out_g/tenders.json out_b/tenders.json out_a/tenders.json
 
       - name: Build page
-        run: python3 scripts/build.py
+        run: |
+          python3 scripts/build.py
+          TZ=Asia/Yerevan date "+%F %T" > data/last_run.txt
 
       - name: Commit
         run: |
           git config user.name "digest-bot"
           git config user.email "digest-bot@users.noreply.github.com"
-          git add data/days.json site/index.html
+          git add data/ site/index.html
           git diff --cached --quiet && echo "no changes" || (git commit -m "Digest $DAY" && git push)
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
