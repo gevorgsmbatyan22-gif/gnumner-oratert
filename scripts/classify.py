@@ -143,6 +143,9 @@ def main():
                         appr=appr_date(r.get("appr")), items=items[:3], v=v, note=note, pub=r.get("pub", ""),
                         dl=(ea.get("deadline") or r.get("dl") or "")[:16], src=r.get("src", ""), url=r.get("url") or r.get("href")))
     data = json.load(open(DATA)) if os.path.exists(DATA) else {"days": []}
+    old = next((d for d in data["days"] if d["date"] == DAY), None)
+    if os.environ.get("BACKFILL") and old and len(old["tenders"]) >= len(out):
+        print("backfill: existing day has", len(old["tenders"]), ">=", len(out), "- kept"); return 0
     days = [d for d in data["days"] if d["date"] != DAY] + [{"date": DAY, "tenders": out}]
     data["days"] = sorted(days, key=lambda d: d["date"])[-30:]
     json.dump(data, open(DATA, "w"), ensure_ascii=False)
