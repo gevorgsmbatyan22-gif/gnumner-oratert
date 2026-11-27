@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Գնումների օրաթերթ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Armenian:wght@400;500;700;800&family=Noto+Serif+Armenian:wght@700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: a sober daily procurement bulletin — exact, scannable, newspaper graphics desk.
+   IDEA: the official gazette page: one dated issue, a tally ruler, then a ledger of notices.
+   PICTURE: a full-width tally ruler — 61 ticks, one per tender, coloured by verdict.
+   COLOUR and TYPE: white paper, black ink, vermilion for risk, ochre for caution; Noto Serif/Sans Armenian.
+   LAYOUT: masthead, finding + ruler, filter row, ledger cards, method, footer. */
+:root{color-scheme:light dark;--bg:light-dark(#fbfaf7,#121110);--ink:light-dark(#161412,#efece6);--mute:light-dark(#6b655d,#a49d93);--line:light-dark(#e4dfd6,#2c2925);--card:light-dark(#fff,#1a1816);
+--risk:light-dark(#e3401a,#ff6a45);--warn:light-dark(#c28a00,#e7b23a);--ok:light-dark(#2b2926,#d9d4cb);--na:light-dark(#b9b2a7,#5d5850)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Noto Sans Armenian",system-ui,sans-serif;overflow-x:clip}
+a{color:inherit}.sr{position:absolute;left:-9999px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 max(4vw,16px)}
+.mast{border-bottom:3px solid var(--ink);padding:18px 0 12px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:baseline;justify-content:space-between}
+.mast b{font:700 20px/1.1 "Noto Serif Armenian",serif}
+.mast span{color:var(--mute);font-size:14px}
+.mast select{font:inherit;font-size:16px;padding:8px 12px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);min-height:44px}
+.hero{padding:clamp(24px,4vw,52px) 0 18px}
+h1{font:800 clamp(30px,4.6vw,50px)/1.06 "Noto Sans Armenian",sans-serif;margin:0 0 12px;text-wrap:balance;max-width:22ch}
+.lede{color:var(--mute);max-width:68ch;margin:0 0 26px}
+.ruler{display:grid;gap:3px;height:clamp(110px,18vw,190px);align-items:end}
+.ruler i{display:block;height:100%;border-radius:2px;background:var(--ok);transform-origin:bottom;animation:up .6s ease-out backwards}
+.ruler i.risk{background:var(--risk)}.ruler i.warn{background:var(--warn);height:80%}.ruler i.ok{height:55%}.ruler i.na{background:var(--na);height:35%}
+.ruler i.risk{height:100%}
+@keyframes up{from{transform:scaleY(0)}}
+@media(prefers-reduced-motion:reduce){.ruler i{animation:none}}
+.tally{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid var(--ink);margin-top:10px}
+.tally button{all:unset;cursor:pointer;padding:12px 10px 10px 0;border-right:1px solid var(--line);min-height:44px}
+.tally button:last-child{border-right:0}
+.tally button:focus-visible{outline:2px solid var(--risk);outline-offset:2px}
+.tally .n{font:800 clamp(26px,4vw,40px)/1 "Noto Sans Armenian",sans-serif;display:block}
+.tally .l{font-size:14px;color:var(--mute);display:flex;gap:6px;align-items:center;margin-top:4px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.tally button[aria-pressed=true] .l{color:var(--ink);font-weight:700}
+.risk-c{background:var(--risk)}.warn-c{background:var(--warn)}.ok-c{background:var(--ok)}.na-c{background:var(--na)}
+.bar{position:sticky;top:0;z-index:2;background:var(--bg);border-bottom:1px solid var(--line);padding:12px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.bar input{flex:1 1 260px;font:inherit;font-size:16px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);min-height:44px}
+.bar input:focus-visible,.mast select:focus-visible{outline:2px solid var(--risk)}
+.kinds{display:flex;flex-wrap:wrap;gap:6px;width:100%}.kinds button{font:inherit;font-size:14px;padding:8px 14px;min-height:40px;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--ink);cursor:pointer}.kinds button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}.kinds button:focus-visible{outline:2px solid var(--risk);outline-offset:2px}.kind{font-size:12px;font-weight:700;letter-spacing:.01em;color:var(--mute);margin-left:8px}
+.bar .cnt{color:var(--mute);font-size:14px}
+.list{display:grid;gap:12px;padding:18px 0 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 20px}
+.tag{display:inline-flex;gap:6px;align-items:center;font-size:13px;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid currentColor;white-space:nowrap}
+.tag.risk{color:var(--risk)}.tag.warn{color:var(--warn)}.tag.ok{color:var(--mute)}.tag.na{color:var(--mute);border-style:dashed}
+.code{font-size:13px;color:var(--mute);margin-left:8px;overflow-wrap:anywhere}
+.subj{font-weight:700;font-size:17px;margin:6px 0 2px;line-height:1.35}
+.cust{color:var(--mute);font-size:15px}
+.items{font-size:14px;margin-top:6px}
+.note{margin-top:8px;font-size:15px;padding-left:12px;border-left:3px solid var(--line)}
+.card.risk .note{border-color:var(--risk)}.card.warn .note{border-color:var(--warn)}
+.side{text-align:right;font-size:13px;color:var(--mute);display:grid;gap:3px;align-content:start;white-space:nowrap}
+.side strong{color:var(--ink);font-size:15px}
+.side a{margin-top:8px;display:inline-block;padding:10px 14px;border:1px solid var(--ink);border-radius:8px;text-decoration:none;color:var(--ink);font-weight:700;font-size:14px;min-height:44px}
+.side a:hover{background:var(--ink);color:var(--bg)}
+.empty{color:var(--mute);padding:30px 0}
+.method{border-top:3px solid var(--ink);padding:28px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+.method h2{font:700 22px/1.2 "Noto Serif Armenian",serif;margin:0 0 8px}
+.method p,.method li{color:var(--mute);font-size:15px;margin:0 0 8px}
+.method ul{padding-left:18px;margin:0}
+footer{border-top:1px solid var(--line);padding:18px 0 32px;font-size:14px;color:var(--mute);display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+@media(max-width:600px){.card{grid-template-columns:minmax(0,1fr)}.side{text-align:left;grid-template-columns:1fr 1fr;white-space:normal}.side a{grid-column:1/-1;text-align:center}.tally{grid-template-columns:repeat(2,minmax(0,1fr))}.tally button:nth-child(2){border-right:0}.tally button{border-bottom:1px solid var(--line)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <div><b>Գնումների օրաթերթ</b><br><span>Աղբյուր՝ gnumner.minfin.am · գնանշման հարցում, բաց մրցույթ, էլեկտրոնային աճուրդ</span></div>
+    <label><span class="sr">Օր՝ </span><select id="day" aria-label="Ընտրել օրը"></select></label>
+  </header>
+  <section class="hero">
+    <h1 id="h1"></h1>
+    <p class="lede" id="lede"></p>
+    <div class="ruler" id="ruler" aria-hidden="true"></div>
+    <div class="tally" id="tally"></div>
+  </section>
+  <div class="bar">
+    <div class="kinds" id="kinds" role="group" aria-label="Ընթացակարգի տեսակ"></div>
+    <input id="q" type="search" placeholder="Որոնել՝ պատվիրատու, ծածկագիր, ապրանք…" aria-label="Որոնում">
+    <span class="cnt" id="cnt"></span>
+  </div>
+  <main class="list" id="list"></main>
+  <section class="method">
+    <div><h2>Ինչպես է որոշվում «խտրական» կարգավիճակը</h2>
+      <p>Յուրաքանչյուր հրավերից առանձնացվում է «Տեխնիկական բնութագիր – գնման ժամանակացույց» բաժինը և ստուգվում է այն պահանջի լույսի ներքո, որ բնութագիրը չպետք է հղում կատարի կոնկրետ ապրանքանիշի, մոդելի, արտադրողի կամ ծագման երկրի՝ առանց «կամ համարժեք» նշման։</p></div>
+    <div><h2>Կարգավիճակներ</h2><ul>
+      <li><span class="dot risk-c"></span> <b>Հնարավոր խտրական</b>՝ կոնկրետ ապրանքանիշ/մոդել/արտադրող՝ առանց «կամ համարժեք»։</li>
+      <li><span class="dot warn-c"></span> <b>Ուշադրություն</b>՝ սահմանափակող, բայց հնարավոր է հիմնավորված պահանջ (համատեղելիություն, «ցանկալի» ապրանքանիշ)։</li>
+      <li><span class="dot ok-c"></span> <b>Ոչ խտրական</b>՝ նման նշաններ չեն հայտնաբերվել, կամ մակնիշը վերաբերում է պատվիրատուի առկա սարքավորմանը։</li>
+      <li><span class="dot na-c"></span> <b>Չստուգված</b>՝ ֆայլը չբացվեց կամ բնութագիրը ավտոմատ չգտնվեց։</li></ul></div>
+    <div><h2>Սահմանափակում</h2><p>Գնահատումը ավտոմատ վերլուծության և ընտրովի ձեռքով ստուգման արդյունք է, ոչ իրավական եզրակացություն։ Հայտ ներկայացնելուց առաջ բացեք բնօրինակ հրավերը։</p></div>
+  </section>
+  <footer><span id="upd"></span><span>Պատրաստեց՝ <a href="https://www.linkedin.com/in/gevorg-smbatyan/">Gevorg Smbatyan</a></span></footer>
+</div>
+<script type="application/json" id="data">__DATA__</script>
+<script>
+{
+const DATA=JSON.parse(document.getElementById('data').textContent);
+const L={risk:'Հնարավոր խտրական',warn:'Ուշադրություն',ok:'Ոչ խտրական',na:'Չստուգված'};
+const ORDER=['risk','warn','ok','na'];
+const KN={gnanshum:'Գնանշման հարցում',bac:'Բաց մրցույթ',achurd:'Էլ. աճուրդ'};let kind=null;
+const kOf=x=>x.kind||'gnanshum';
+const MON=['հունվարի','փետրվարի','մարտի','ապրիլի','մայիսի','հունիսի','հուլիսի','օգոստոսի','սեպտեմբերի','հոկտեմբերի','նոյեմբերի','դեկտեմբերի'];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hd=d=>{const [y,m,dd]=d.split('-');return `${+dd} ${MON[+m-1]} ${y}`};
+const days=[...DATA.days].sort((a,b)=>b.date.localeCompare(a.date));
+const sel=document.getElementById('day'),q=document.getElementById('q');
+sel.innerHTML=days.map(d=>`<option value="${esc(d.date)}">${esc(hd(d.date))} · ${d.tenders.length}</option>`).join('');
+let filt=null;
+const cur=()=>days.find(d=>d.date===sel.value)||days[0];
+function head(){const d=cur(),all=d.tenders,t=all.filter(x=>!kind||kOf(x)===kind),c={};
+ const ks=Object.keys(KN).filter(k=>all.some(x=>kOf(x)===k));
+ document.getElementById('kinds').innerHTML=[`<button data-kind="" aria-pressed="${!kind}">Բոլորը · ${all.length}</button>`,...ks.map(k=>`<button data-kind="${k}" aria-pressed="${kind===k}">${KN[k]} · ${all.filter(x=>kOf(x)===k).length}</button>`)].join('');ORDER.forEach(k=>c[k]=t.filter(x=>x.v===k).length);
+ document.getElementById('h1').textContent=`${hd(d.date)}․ ${t.length} նոր ${kind?KN[kind].toLowerCase():'գնման ընթացակարգ'}, ${c.risk}-ում՝ խտրականության ռիսկ`;
+ document.getElementById('lede').textContent=`Ստուգվել է ${t.length-c.na} հրավերի տեխնիկական բնութագիր։ ${c.risk} դեպքում պահանջվում է կոնկրետ ապրանքանիշ կամ մոդել՝ առանց «կամ համարժեք» նշման, ${c.warn} դեպքում պահանջը սահմանափակող է, բայց կարող է հիմնավորված լինել։ ${c.na} հրավերում բնութագիրը ավտոմատ չգտնվեց կամ ֆայլը չբացվեց։`;
+ const sorted=[...t].sort((a,b)=>ORDER.indexOf(a.v)-ORDER.indexOf(b.v));
+ const r=document.getElementById('ruler');r.style.gridTemplateColumns=`repeat(${t.length},minmax(0,1fr))`;
+ r.innerHTML=sorted.map((x,i)=>`<i class="${x.v}" style="animation-delay:${i*12}ms" title="${esc(x.code)}"></i>`).join('');
+ document.getElementById('tally').innerHTML=ORDER.map(k=>`<button data-k="${k}" aria-pressed="${filt===k}"><span class="n">${c[k]}</span><span class="l"><span class="dot ${k}-c"></span>${L[k]}</span></button>`).join('');
+ document.getElementById('upd').textContent=`Թողարկում՝ ${hd(d.date)} · թարմացվում է ամեն օր`;}
+function list(){const t=cur().tenders.filter(x=>!kind||kOf(x)===kind),s=q.value.trim().toLowerCase();
+ const rows=t.filter(x=>(!filt||x.v===filt)&&(!s||[x.code,x.cust,x.subj,(x.items||[]).join(' '),x.note].join(' ').toLowerCase().includes(s))).sort((a,b)=>ORDER.indexOf(a.v)-ORDER.indexOf(b.v)||b.pub.localeCompare(a.pub));
+ document.getElementById('cnt').textContent=`${rows.length} / ${t.length}`;
+ document.getElementById('list').innerHTML=rows.length?rows.map(x=>`<article class="card ${x.v}"><div>
+  <span class="tag ${x.v}"><span class="dot ${x.v}-c"></span>${L[x.v]}</span><span class="code">${esc(x.code)}</span><span class="kind">${esc(KN[kOf(x)])}</span>
+  <div class="subj">${esc(x.subj)}</div><div class="cust">${esc(x.cust)}</div>
+  ${x.items&&x.items.length?`<div class="items">Չափաբաժիններ՝ ${esc(x.items.join(' · '))}</div>`:''}
+  ${x.note?`<div class="note">${esc(x.note)}</div>`:''}</div>
+  <div class="side"><span>Հայտերի վերջնաժամկետ</span><strong>${esc(x.dl)}</strong>
+  <span>Հրապարակվել է՝ ${esc(x.pub)}</span>${x.appr?`<span>Հանձնաժողովի հաստատում՝ ${esc(x.appr)}</span>`:''}
+  <a href="${esc(x.url)}" target="_blank" rel="noopener">Բացել հրավերը (${esc(x.src)}) ↗</a></div></article>`).join(''):'<p class="empty">Համընկնումներ չկան։</p>';}
+document.getElementById('tally').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;filt=filt===b.dataset.k?null:b.dataset.k;head();list();});
+sel.addEventListener('change',()=>{filt=null;kind=null;head();list();});
+document.getElementById('kinds').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;kind=b.dataset.kind||null;filt=null;head();list();});
+q.addEventListener('input',list);
+head();list();
+}
+</script>
+</body>
+</html>
